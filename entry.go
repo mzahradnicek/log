@@ -72,10 +72,22 @@ func (e *logEntry) AddFields(f Fields) *logEntry {
 // NewError create and return *logEntry of error type.
 // Arguments are handled in the manner of fmt.Print.
 // Also adds file and line number.
-func NewError(s string) (res *logEntry) {
-	res = &logEntry{ltype: TError, message: s}
+func NewError(e interface{}) *logEntry {
+	if v, ok := e.(*logEntry); ok {
+		return v
+	}
+
+	var res *logEntry
+	if v, ok := e.(error); ok {
+		res = &logEntry{ltype: TError, message: v.Error()}
+	} else if v, ok := e.(string); ok {
+		res = &logEntry{ltype: TError, message: v}
+	} else {
+		res = &logEntry{ltype: TError, message: "Can't create new error!"}
+	}
+
 	res.addSrcFileInfo()
-	return
+	return res
 }
 
 // NewError create and return *logEntry of error type.
