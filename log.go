@@ -25,7 +25,7 @@ func (l *Logger) Save(e interface{}) {
 	} else if v, ok := e.(error); ok {
 		f = Fields{"type": TError, "msg": v.Error()}
 	} else {
-		fmt.Println("notype")
+		f = Fields{"type": TError, "msg": "Wrong log type"}
 		return
 	}
 
