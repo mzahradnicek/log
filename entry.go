@@ -25,6 +25,8 @@ type logEntry struct {
 	line    int
 	file    string
 	fields  Fields
+
+	parent error
 }
 
 func (e *logEntry) Error() string {
@@ -33,6 +35,10 @@ func (e *logEntry) Error() string {
 	}
 
 	return ""
+}
+
+func (e *logEntry) Parent() error {
+	return e.parent
 }
 
 // ToMap convert logEntry to map for use in Log function.
@@ -79,7 +85,7 @@ func NewError(e interface{}) *logEntry {
 
 	var res *logEntry
 	if v, ok := e.(error); ok {
-		res = &logEntry{ltype: TError, message: v.Error()}
+		res = &logEntry{ltype: TError, message: v.Error(), parent: v}
 	} else if v, ok := e.(string); ok {
 		res = &logEntry{ltype: TError, message: v}
 	} else {
