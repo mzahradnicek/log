@@ -15,6 +15,7 @@ const (
 
 type Entrier interface {
 	ToFields() Fields
+	Parent() error
 }
 
 type Fields map[string]interface{}
