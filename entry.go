@@ -42,6 +42,13 @@ func (e *logEntry) Parent() error {
 	return e.parent
 }
 
+func GetParentError(e error) error {
+	if ent, ok := e.(Entrier); ok {
+		return ent.Parent()
+	}
+	return e
+}
+
 // ToMap convert logEntry to map for use in Log function.
 func (e *logEntry) ToFields() Fields {
 	res := Fields{}
@@ -81,6 +88,7 @@ func (e *logEntry) AddFields(f Fields) *logEntry {
 // Also adds file and line number.
 func NewError(e interface{}) *logEntry {
 	if v, ok := e.(*logEntry); ok {
+		v.addSrcFileInfo()
 		return v
 	}
 
