@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
+	"strings"
 )
 
 const (
-	TError   = "error"
-	TWarning = "warning"
-	TInfo    = "info"
-	TDebug   = "debug"
+	TError         = "error"
+	TWarning       = "warning"
+	TInfo          = "info"
+	TDebug         = "debug"
+	maxStackLength = 50
 )
 
 type Entrier interface {
@@ -21,11 +23,12 @@ type Entrier interface {
 type Fields map[string]interface{}
 
 type logEntry struct {
-	ltype   string
-	message string
-	line    int
-	file    string
-	fields  Fields
+	ltype      string
+	message    string
+	line       int
+	file       string
+	fields     Fields
+	stackTrace []string
 
 	parent error
 }
@@ -58,6 +61,7 @@ func (e *logEntry) ToFields() Fields {
 	res["type"] = e.ltype
 	res["msg"] = e.message
 	res["file"] = e.file + ":" + strconv.Itoa(e.line)
+	res["stack"] = e.stackTrace
 	return res
 }
 
@@ -68,6 +72,26 @@ func (e *logEntry) addSrcFileInfo() {
 	if !ok {
 		e.file = "???"
 		e.line = 0
+	}
+}
+
+func (e *logEntry) addStackTrace() { // this can be optimized in v2
+	sbuff := make([]uintptr, maxStackLength)
+	length := runtime.Callers(3, sbuff[:])
+	stack := sbuff[:length]
+
+	frames := runtime.CallersFrames(stack)
+	for {
+		frame, more := frames.Next()
+		if strings.Contains(frame.File, "runtime/") {
+			continue
+		}
+
+		e.stackTrace = append(e.stackTrace, fmt.Sprintf("%s:%d - %s", frame.File, frame.Line, frame.Function))
+
+		if !more {
+			break
+		}
 	}
 }
 
@@ -101,6 +125,7 @@ func NewError(e interface{}) *logEntry {
 		res = &logEntry{ltype: TError, message: "Can't create new error!"}
 	}
 
+	res.addStackTrace()
 	res.addSrcFileInfo()
 	return res
 }
@@ -110,6 +135,7 @@ func NewError(e interface{}) *logEntry {
 // Also adds file and line number.
 func NewErrorf(s string, v ...interface{}) (res *logEntry) {
 	res = &logEntry{ltype: TError, message: fmt.Sprintf(s, v...)}
+	res.addStackTrace()
 	res.addSrcFileInfo()
 	return
 }

@@ -46,12 +46,14 @@ func (l *Logger) Save(e interface{}) {
 
 func (l *Logger) Error(s string) {
 	e := &logEntry{ltype: TError, message: s}
+	e.addStackTrace()
 	e.addSrcFileInfo()
 	l.Save(e)
 }
 
 func (l *Logger) Errorf(s string, v ...interface{}) {
 	e := &logEntry{ltype: TError, message: fmt.Sprintf(s, v...)}
+	e.addStackTrace()
 	e.addSrcFileInfo()
 	l.Save(e)
 }
@@ -110,12 +112,14 @@ func Save(e interface{}) {
 
 func Error(s string) {
 	e := &logEntry{ltype: TError, message: s}
+	e.addStackTrace()
 	e.addSrcFileInfo()
 	std.Save(e)
 }
 
 func Errorf(s string, v ...interface{}) {
 	e := &logEntry{ltype: TError, message: fmt.Sprintf(s, v...)}
+	e.addStackTrace()
 	e.addSrcFileInfo()
 	std.Save(e)
 }
