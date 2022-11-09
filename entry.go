@@ -18,6 +18,7 @@ const (
 type Entrier interface {
 	ToFields() Fields
 	Parent() error
+	Unwrap() error
 }
 
 type Fields map[string]interface{}
@@ -30,7 +31,7 @@ type logEntry struct {
 	fields     Fields
 	stackTrace []string
 
-	parent error
+	err error
 }
 
 func (e *logEntry) Error() string {
@@ -41,10 +42,16 @@ func (e *logEntry) Error() string {
 	return ""
 }
 
-func (e *logEntry) Parent() error {
-	return e.parent
+func (e *logEntry) Unwrap() error {
+	return e.err
 }
 
+// Deprecated
+func (e *logEntry) Parent() error {
+	return e.err
+}
+
+// Deprecated
 func GetParentError(e error) error {
 	if ent, ok := e.(Entrier); ok {
 		return ent.Parent()
@@ -58,6 +65,7 @@ func (e *logEntry) ToFields() Fields {
 	for k, v := range e.fields {
 		res[k] = v
 	}
+
 	res["type"] = e.ltype
 	res["msg"] = e.message
 	res["file"] = e.file + ":" + strconv.Itoa(e.line)
@@ -118,7 +126,7 @@ func NewError(e interface{}) *logEntry {
 
 	var res *logEntry
 	if v, ok := e.(error); ok {
-		res = &logEntry{ltype: TError, message: v.Error(), parent: v}
+		res = &logEntry{ltype: TError, message: v.Error(), err: v}
 	} else if v, ok := e.(string); ok {
 		res = &logEntry{ltype: TError, message: v}
 	} else {
