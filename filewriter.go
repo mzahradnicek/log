@@ -18,12 +18,9 @@ func (f *FileWriter) Write(p []byte) (n int, err error) {
 		}
 	}
 
-	if _, err := f.file.Write(p); err != nil {
-		return 0, err
-	}
+	p = append(p, 10)
 
-	// add newline
-	return f.file.Write([]byte{10})
+	return f.file.Write(p)
 }
 
 func (f *FileWriter) Open(name string) error {
